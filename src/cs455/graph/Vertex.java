@@ -1,4 +1,4 @@
-package cs455.harvester.graph;
+package cs455.graph;
 
 import java.util.HashSet;
 

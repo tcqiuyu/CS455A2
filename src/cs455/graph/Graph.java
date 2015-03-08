@@ -1,6 +1,6 @@
-package cs455.harvester.graph;
+package cs455.graph;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Qiu on 3/8/15.
@@ -8,7 +8,7 @@ import java.util.HashMap;
 public class Graph {
 
     private static final Graph instance = new Graph();
-    private HashMap<String, Vertex> graph = new HashMap<String, Vertex>();
+    private ConcurrentHashMap<String, Vertex> graph = new ConcurrentHashMap<String, Vertex>();
 
     private Graph() {
     }
@@ -17,12 +17,17 @@ public class Graph {
         return instance;
     }
 
+    //REVIEW: need synchronize?
     public Vertex addVertex(Vertex vertex) {
         return graph.put(vertex.toString(), vertex);
     }
 
-    public HashMap<String, Vertex> getGraph() {
+    public ConcurrentHashMap<String, Vertex> getGraph() {
         return graph;
+    }
+
+    public boolean containsURL(String url) {
+        return graph.containsKey(url);
     }
 
 

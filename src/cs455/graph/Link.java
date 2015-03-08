@@ -1,4 +1,4 @@
-package cs455.harvester.graph;
+package cs455.graph;
 
 /**
  * Created by Qiu on 3/8/15.

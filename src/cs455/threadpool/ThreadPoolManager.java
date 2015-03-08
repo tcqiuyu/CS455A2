@@ -1,13 +1,11 @@
-package cs455.harvester.threadpool;
+package cs455.threadpool;
 
 import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Created by Qiu on 3/7/15.
  */
-public class ThreadPool {
+public class ThreadPoolManager {
 
     private int size;
     private final ArrayList<Thread> workerThreads;
@@ -16,7 +14,7 @@ public class ThreadPool {
 
     private TaskQueue taskQueue = TaskQueue.getInstance();
 
-    public ThreadPool(int size) {
+    public ThreadPoolManager(int size) {
         this.size = size;
         workerThreads = new ArrayList<Thread>(10);
         init();

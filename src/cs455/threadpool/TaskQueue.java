@@ -1,4 +1,6 @@
-package cs455.harvester.threadpool;
+package cs455.threadpool;
+
+import cs455.graph.Graph;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -11,14 +13,17 @@ public class TaskQueue {
     private static final TaskQueue instance = new TaskQueue();
     private BlockingQueue<Runnable> taskQueue = new LinkedBlockingDeque<Runnable>();
 
-    private TaskQueue(){}
+    private TaskQueue() {
+    }
 
     public static TaskQueue getInstance() {
         return instance;
     }
 
-    public synchronized void addTask(Runnable runnable) {
-        taskQueue.add(runnable);
+    public synchronized void addTask(Task task) {
+        if (!Graph.getInstance().containsURL(task.getURL())) {
+            taskQueue.add(task);
+        }
     }
 
     public Runnable getTask() throws InterruptedException {
