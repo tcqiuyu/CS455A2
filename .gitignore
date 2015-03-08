@@ -1,3 +1,14 @@
-/.idea/
-/.settings/
-/bin/
+*.class
+.DS_Store
+*.iml
+*.idea*
+*target*
+.*.swp
+*.settings
+*.project
+*.classpath
+*nbactions.xml
+*nb-configuration.xml
+*.ser
+*.json
+*bin*
