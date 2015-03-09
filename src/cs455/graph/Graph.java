@@ -1,6 +1,6 @@
 package cs455.graph;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 /**
  * Created by Qiu on 3/8/15.
@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Graph {
 
     private static final Graph instance = new Graph();
-    private ConcurrentHashMap<String, Vertex> graph = new ConcurrentHashMap<String, Vertex>();
+    private HashMap<String, Vertex> graph = new HashMap<String, Vertex>();
 
     private Graph() {
     }
@@ -17,12 +17,13 @@ public class Graph {
         return instance;
     }
 
-    //REVIEW: need synchronize?
     public Vertex addVertex(Vertex vertex) {
-        return graph.put(vertex.toString(), vertex);
+        synchronized (graph) {
+            return graph.put(vertex.toString(), vertex);
+        }
     }
 
-    public ConcurrentHashMap<String, Vertex> getGraph() {
+    public HashMap<String, Vertex> getGraph() {
         return graph;
     }
 

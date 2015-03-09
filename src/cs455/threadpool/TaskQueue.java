@@ -2,8 +2,8 @@ package cs455.threadpool;
 
 import cs455.graph.Graph;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Created by Qiu on 3/7/15.
@@ -11,7 +11,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class TaskQueue {
 
     private static final TaskQueue instance = new TaskQueue();
-    private BlockingQueue<Runnable> taskQueue = new LinkedBlockingDeque<Runnable>();
+    private final Queue<Runnable> taskQueue = new LinkedList<Runnable>();
 
     private TaskQueue() {
     }
@@ -20,14 +20,16 @@ public class TaskQueue {
         return instance;
     }
 
-    public synchronized void addTask(Task task) {
-        if (!Graph.getInstance().containsURL(task.getURL())) {
-            taskQueue.add(task);
+    public void addTask(Task task) {
+        synchronized (taskQueue) {
+            if (!Graph.getInstance().containsURL(task.getURL())) {
+                taskQueue.add(task);
+            }
         }
     }
 
     public Runnable getTask() throws InterruptedException {
-        return taskQueue.take();
+        return taskQueue.poll();
     }
 
     public boolean isEmpty() {

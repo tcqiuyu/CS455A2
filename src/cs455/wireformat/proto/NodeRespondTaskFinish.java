@@ -1,4 +1,7 @@
-package cs455.wireformat;
+package cs455.wireformat.proto;
+
+import cs455.wireformat.Event;
+import cs455.wireformat.Protocol;
 
 import java.io.*;
 

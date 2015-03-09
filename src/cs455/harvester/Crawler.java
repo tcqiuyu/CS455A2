@@ -1,10 +1,11 @@
 package cs455.harvester;
 
+import cs455.wireformat.Event;
+
 /**
  * Created by Qiu on 3/7/15.
  */
-public class Crawler {
-
+public class Crawler implements Node {
 
     public static void main(String[] args) {
         if (args.length != 4) {
@@ -16,6 +17,11 @@ public class Crawler {
         String root = args[2];
         String confPath = args[3];
 
+
+    }
+
+    @Override
+    public void onEvent(Event event, String srcAddr) {
 
     }
 
