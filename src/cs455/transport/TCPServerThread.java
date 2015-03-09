@@ -38,11 +38,10 @@ public class TCPServerThread extends Thread {
 
     @Override
     public void run() {
-
         while (true) {
             try {
                 Socket socket = serverSocket.accept();
-                TCPConnection connection = new TCPConnection();
+                TCPConnection connection = new TCPConnection(node, socket);
             } catch (IOException e) {
                 System.err.println(e.getMessage());
             }
