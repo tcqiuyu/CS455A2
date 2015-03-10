@@ -21,6 +21,7 @@ import java.util.Collection;
 public class Crawler implements Node {
 
     public static String rootURL;
+
     private int port;
     private int poolSize;
     private String confPath;
@@ -62,7 +63,7 @@ public class Crawler implements Node {
 //            e.printStackTrace();
         }
 
-        CrawlingTask initTask = new CrawlingTask(rootURL, 0);
+        CrawlingTask initTask = new CrawlingTask(rootURL, 0, configUtil);
         TaskQueue.getInstance().addTask(initTask);
         threadPoolManager = new ThreadPoolManager(poolSize);
 

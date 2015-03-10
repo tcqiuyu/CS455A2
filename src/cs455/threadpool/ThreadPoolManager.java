@@ -12,8 +12,6 @@ public class ThreadPoolManager {
 
     private volatile boolean isFinish;
 
-    private TaskQueue taskQueue = TaskQueue.getInstance();
-
     public ThreadPoolManager(int size) {
         this.size = size;
         workerThreads = new ArrayList<Thread>(size);
@@ -23,7 +21,7 @@ public class ThreadPoolManager {
     public void init() {
         isFinish = false;
         for (int i = 0; i < size; i++) {
-            Thread aThread = new WorkerThread();
+            WorkerThread aThread = new WorkerThread();
             workerThreads.add(aThread);
             aThread.run();
         }
@@ -32,7 +30,7 @@ public class ThreadPoolManager {
 
     public void shutdown() {
 
-        while (!taskQueue.isEmpty()) {
+        while (!TaskQueue.getInstance().isEmpty()) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -52,7 +50,8 @@ public class ThreadPoolManager {
         public void run() {
             while (!isFinish) {
                 try {
-                    Task task = taskQueue.getTask();
+//                    System.out.println(TaskQueue.getInstance().getTaskCount());
+                    Task task = TaskQueue.getInstance().getTask();
                     task.doTask();
                 } catch (InterruptedException e) {
                     e.printStackTrace();

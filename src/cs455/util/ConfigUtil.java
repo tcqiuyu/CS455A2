@@ -42,7 +42,11 @@ public class ConfigUtil {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 String[] info = line.split(",");
-                crawlerMap.put(info[1], info[0]);
+                String crawlerInfo = info[0];
+                String rootInfo = info[1];
+                String rootDomain = URLUtil.getDomain(rootInfo);
+//                System.out.println(rootInfo + "------->" + rootDomain);
+                crawlerMap.put(rootDomain, crawlerInfo);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -61,7 +65,8 @@ public class ConfigUtil {
     }
 
     public TCPConnection getConnectionToCrawler(String rootURL) throws IOException {
-        String info = crawlerMap.get(rootURL);
+        String domain = URLUtil.getDomain(rootURL);
+        String info = crawlerMap.get(domain);
         String hostname = info.split(":")[0];
         int port = Integer.parseInt(info.split(":")[1]);
         return ConnectionFactory.getInstance().getConnection(hostname, port, InetAddress.getLocalHost(), node);

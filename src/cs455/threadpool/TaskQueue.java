@@ -28,10 +28,15 @@ public class TaskQueue {
     public Task getTask() throws InterruptedException {
         synchronized (taskQueue) {
             while (taskQueue.isEmpty()) {
+//                System.out.println("size:" + taskQueue.size());
                 taskQueue.wait();
             }
             return taskQueue.poll();
         }
+    }
+
+    public int getTaskCount() {
+        return taskQueue.size();
     }
 
     public boolean isEmpty() {

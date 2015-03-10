@@ -36,6 +36,7 @@ public class URLUtil {
         String urlDomain = null;
         try {
             urlDomain = getDomain(url);
+//            System.out.println(url + "----->" + urlDomain);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -146,7 +147,6 @@ public class URLUtil {
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
-        System.out.println("HERE");
 
         try {
             String redirectedUrl = resolveRedirects(pageUrl);
@@ -184,9 +184,9 @@ public class URLUtil {
         } catch (IOException e) {
             addToBadUrls(pageUrl);
         } catch (URISyntaxException e) {
+            System.out.println(e.getMessage());
             addProcessedUrl(pageUrl);
         }
-
         return extractedUrls;
     }
 
