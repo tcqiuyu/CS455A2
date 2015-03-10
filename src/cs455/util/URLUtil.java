@@ -1,23 +1,28 @@
 package cs455.util;
 
+import cs455.harvester.Crawler;
+import net.htmlparser.jericho.*;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Qiu on 3/9/2015.
  */
-public class URLHandler {
+public class URLUtil {
 
+    private static final URLUtil instance = new URLUtil();
     private static Map<String, String> processedURLs = new HashMap<String, String>();
+    private static Map<String, String> badURLs = new HashMap<String, String>();
 
+    private URLUtil() {
+    }
 
-    public static boolean isProcessed(String url) {
-        synchronized (processedURLs) {
-            return processedURLs.containsKey(url);
-        }
+    public static URLUtil getInstance() {
+        return instance;
     }
 
     /**
@@ -94,17 +99,79 @@ public class URLHandler {
         return normalized;
     }
 
-    public static String resolveRedirects(String url) throws IOException {
-        HttpURLConnection con = (HttpURLConnection) (new URL(url).openConnection());
-        con.setInstanceFollowRedirects(false);
-        con.connect();
-        int responseCode = con.getResponseCode();
-        if (responseCode == 301) {
-            return con.getHeaderField("Location");
-        } else {
-            return url;
+    public static boolean withinDomain(String pageUrl) {
+        try {
+            return new URL(pageUrl).getHost().equals(new URL(Crawler.rootURL).getHost());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
+    public static boolean isTargetDomain(String url) {
+        String urlDomain = null;
+        try {
+            urlDomain = getDomain(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return ConfigUtil.getCrawlerMap().containsKey(urlDomain);
+    }
 
+    public static String getDomain(String targetUrl) throws MalformedURLException {
+        return new URL(targetUrl).getHost();
+    }
+
+    private String resolveRedirects(String url) {
+        HttpURLConnection con = null;
+        try {
+            con = (HttpURLConnection) (new URL(url).openConnection());
+            con.setInstanceFollowRedirects(false);
+            con.connect();
+            int responseCode = con.getResponseCode();
+            if (responseCode == 301) {
+                return con.getHeaderField("Location");
+            }
+        } catch (IOException e) {
+            synchronized (badURLs) {
+                badURLs.put(url, null);
+            }
+        }
+        return url;
+    }
+
+    public boolean isProcessed(String url) {
+        synchronized (processedURLs) {
+            return processedURLs.containsKey(url);
+        }
+    }
+
+    public void addProcessedUrl(String url) {
+        synchronized (processedURLs) {
+            processedURLs.put(url, null);
+        }
+    }
+
+    public Set<String> extractUrl(String pageUrl) {
+
+        Set<String> extractedUrls = new HashSet<String>();
+
+        Config.LoggerProvider = LoggerProvider.DISABLED;
+
+        try {
+            String redirectedUrl = resolveRedirects(pageUrl);
+            Source source = new Source(new URL(redirectedUrl));
+
+            List<Element> aTags = source.getAllElements(HTMLElementName.A);
+
+            for (Element aTag : aTags) {
+                
+            }
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

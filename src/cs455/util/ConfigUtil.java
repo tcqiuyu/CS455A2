@@ -6,8 +6,11 @@ import cs455.transport.TCPConnection;
 
 import java.io.*;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by Qiu on 3/9/2015.
@@ -58,9 +61,12 @@ public class ConfigUtil {
         return ConnectionFactory.getInstance().getConnection(hostname, port, InetAddress.getLocalHost(), node);
     }
 
-    public Map<String, String> getCrawlerMap() {
+    public static Map<String, String> getCrawlerMap() {
         return crawlerMap;
     }
 
+    public static Set<String> getTargetDomain(){
+        return crawlerMap.keySet();
+    }
 
 }
