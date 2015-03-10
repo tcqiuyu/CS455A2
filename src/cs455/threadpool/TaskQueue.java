@@ -1,7 +1,5 @@
 package cs455.threadpool;
 
-import cs455.graph.Graph;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -11,7 +9,7 @@ import java.util.Queue;
 public class TaskQueue {
 
     private static final TaskQueue instance = new TaskQueue();
-    private final Queue<Runnable> taskQueue = new LinkedList<Runnable>();
+    private final Queue<Task> taskQueue = new LinkedList<Task>();
 
     private TaskQueue() {
     }
@@ -22,14 +20,18 @@ public class TaskQueue {
 
     public void addTask(Task task) {
         synchronized (taskQueue) {
-            if (!Graph.getInstance().containsURL(task.getURL())) {
-                taskQueue.add(task);
-            }
+            taskQueue.offer(task);
+            taskQueue.notifyAll();
         }
     }
 
-    public Runnable getTask() throws InterruptedException {
-        return taskQueue.poll();
+    public Task getTask() throws InterruptedException {
+        synchronized (taskQueue) {
+            while (taskQueue.isEmpty()) {
+                taskQueue.wait();
+            }
+            return taskQueue.poll();
+        }
     }
 
     public boolean isEmpty() {

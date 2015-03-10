@@ -16,11 +16,12 @@ public class ThreadPoolManager {
 
     public ThreadPoolManager(int size) {
         this.size = size;
-        workerThreads = new ArrayList<Thread>(10);
+        workerThreads = new ArrayList<Thread>(size);
         init();
     }
 
     public void init() {
+        isFinish = false;
         for (int i = 0; i < size; i++) {
             Thread aThread = new WorkerThread();
             workerThreads.add(aThread);
@@ -30,6 +31,7 @@ public class ThreadPoolManager {
 
 
     public void shutdown() {
+
         while (!taskQueue.isEmpty()) {
             try {
                 Thread.sleep(1000);
@@ -50,8 +52,8 @@ public class ThreadPoolManager {
         public void run() {
             while (!isFinish) {
                 try {
-                    Runnable runnable = taskQueue.getTask();
-                    runnable.run();
+                    Task task = taskQueue.getTask();
+                    task.doTask();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
