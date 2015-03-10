@@ -6,8 +6,6 @@ import cs455.transport.TCPConnection;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +24,14 @@ public class ConfigUtil {
         File conf = new File(confPath);
         this.node = node;
         readConfFile(conf);
+    }
+
+    public static Map<String, String> getCrawlerMap() {
+        return crawlerMap;
+    }
+
+    public static Set<String> getTargetDomain() {
+        return crawlerMap.keySet();
     }
 
     private void readConfFile(File conf) {
@@ -59,14 +65,6 @@ public class ConfigUtil {
         String hostname = info.split(":")[0];
         int port = Integer.parseInt(info.split(":")[1]);
         return ConnectionFactory.getInstance().getConnection(hostname, port, InetAddress.getLocalHost(), node);
-    }
-
-    public static Map<String, String> getCrawlerMap() {
-        return crawlerMap;
-    }
-
-    public static Set<String> getTargetDomain(){
-        return crawlerMap.keySet();
     }
 
 }

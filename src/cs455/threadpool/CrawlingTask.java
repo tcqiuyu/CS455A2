@@ -1,6 +1,5 @@
 package cs455.threadpool;
 
-import cs455.harvester.Crawler;
 import cs455.util.URLUtil;
 
 /**
@@ -10,12 +9,10 @@ public class CrawlingTask implements Task {
 
     private String url;
     private int depth;
-    private Crawler crawler;
 
     public CrawlingTask(String url, int depth) {
         this.url = url;
         this.depth = depth;
-        this.crawler = crawler;
     }
 
     public static void main(String[] args) {
@@ -32,10 +29,15 @@ public class CrawlingTask implements Task {
 
         //URL in same domain
         if (URLUtil.withinDomain(url)) {
-            TaskQueue.getInstance().addTask();
+            depth++;
+            for (String extractedUrl : URLUtil.getInstance().extractUrl(url)) {
+                CrawlingTask newTask = new CrawlingTask(extractedUrl, depth);
+                TaskQueue.getInstance().addTask(newTask);
+                System.out.println(extractedUrl);
+
+            }
             return;
         }
-
 
         //URL in other domain
         if (URLUtil.isTargetDomain(url)) {

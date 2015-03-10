@@ -4,9 +4,7 @@ import cs455.harvester.Crawler;
 import net.htmlparser.jericho.*;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 
 /**
@@ -15,14 +13,37 @@ import java.util.*;
 public class URLUtil {
 
     private static final URLUtil instance = new URLUtil();
-    private static Map<String, String> processedURLs = new HashMap<String, String>();
-    private static Map<String, String> badURLs = new HashMap<String, String>();
+    private static final Map<String, String> processedURLs = new HashMap<String, String>();
+    private static final Map<String, String> badURLs = new HashMap<String, String>();
 
     private URLUtil() {
     }
 
     public static URLUtil getInstance() {
         return instance;
+    }
+
+    public static boolean withinDomain(String pageUrl) {
+        try {
+            return new URL(pageUrl).getHost().equals(new URL(Crawler.rootURL).getHost());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean isTargetDomain(String url) {
+        String urlDomain = null;
+        try {
+            urlDomain = getDomain(url);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return ConfigUtil.getCrawlerMap().containsKey(urlDomain);
+    }
+
+    public static String getDomain(String targetUrl) throws MalformedURLException {
+        return new URL(targetUrl).getHost();
     }
 
     /**
@@ -99,31 +120,14 @@ public class URLUtil {
         return normalized;
     }
 
-    public static boolean withinDomain(String pageUrl) {
-        try {
-            return new URL(pageUrl).getHost().equals(new URL(Crawler.rootURL).getHost());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return false;
+    public void addProcessedUrl(String url) {
+        synchronized (processedURLs) {
+            processedURLs.put(url, null);
         }
-    }
-
-    public static boolean isTargetDomain(String url) {
-        String urlDomain = null;
-        try {
-            urlDomain = getDomain(url);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return ConfigUtil.getCrawlerMap().containsKey(urlDomain);
-    }
-
-    public static String getDomain(String targetUrl) throws MalformedURLException {
-        return new URL(targetUrl).getHost();
     }
 
     private String resolveRedirects(String url) {
-        HttpURLConnection con = null;
+        HttpURLConnection con;
         try {
             con = (HttpURLConnection) (new URL(url).openConnection());
             con.setInstanceFollowRedirects(false);
@@ -133,30 +137,16 @@ public class URLUtil {
                 return con.getHeaderField("Location");
             }
         } catch (IOException e) {
-            synchronized (badURLs) {
-                badURLs.put(url, null);
-            }
+            addToBadUrls(url);
         }
         return url;
     }
 
-    public boolean isProcessed(String url) {
-        synchronized (processedURLs) {
-            return processedURLs.containsKey(url);
-        }
-    }
-
-    public void addProcessedUrl(String url) {
-        synchronized (processedURLs) {
-            processedURLs.put(url, null);
-        }
-    }
-
     public Set<String> extractUrl(String pageUrl) {
-
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
+        System.out.println("HERE");
 
         try {
             String redirectedUrl = resolveRedirects(pageUrl);
@@ -165,13 +155,56 @@ public class URLUtil {
             List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
             for (Element aTag : aTags) {
-                
+                String href = aTag.getAttributeValue("href");
+
+                if (!isValidHREF(href)) {
+                    continue;
+                }
+
+                if (!new URI(href).isAbsolute()) {
+                    href = new URI(pageUrl).resolve(href).toString();
+                }
+                href = normalize(href);
+                href = "http://" + (new URL(href)).getAuthority() + (new URL(href)).getPath();
+
+                if (isProcessed(href)) {
+                    continue;
+                }
+
+                if (!isTargetDomain(href)) {
+                    continue;
+                }
+
+                addProcessedUrl(href);
+                extractedUrls.add(href);
             }
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            addToBadUrls(pageUrl);
+        } catch (URISyntaxException e) {
+            addProcessedUrl(pageUrl);
+        }
+
+        return extractedUrls;
+    }
+
+    public boolean isProcessed(String url) {
+        synchronized (processedURLs) {
+            return processedURLs.containsKey(url);
+        }
+    }
+
+    private boolean isValidHREF(String href) {
+        return !(href == null || href.length() == 0)
+                && !(href.startsWith("#") || href.startsWith("mailto")
+                || href.startsWith("https") || href.startsWith("ftp"));
+    }
+
+    private void addToBadUrls(String url) {
+        synchronized (badURLs) {
+            badURLs.put(url, null);
         }
     }
 }

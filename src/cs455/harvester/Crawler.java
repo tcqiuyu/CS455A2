@@ -20,8 +20,8 @@ import java.util.Collection;
  */
 public class Crawler implements Node {
 
-    private int port;
     public static String rootURL;
+    private int port;
     private int poolSize;
     private String confPath;
     private TCPServerThread serverThread;
@@ -47,30 +47,29 @@ public class Crawler implements Node {
         String confPath = args[3];
         rootURL = root;
         Crawler crawler = new Crawler(port, poolSize, confPath);
+
         crawler.init();
     }
 
     public void init() {
         serverThread = new TCPServerThread(this, port);
-        threadPoolManager = new ThreadPoolManager(poolSize);
         configUtil = new ConfigUtil(confPath, this);
         eventHandler = new EventHandler(this);
-
         serverThread.start();
-        threadPoolManager.init();
         try {
             initConnection();
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         }
 
         CrawlingTask initTask = new CrawlingTask(rootURL, 0);
         TaskQueue.getInstance().addTask(initTask);
+        threadPoolManager = new ThreadPoolManager(poolSize);
 
     }
 
     private void initConnection() throws IOException {
-        Collection<String> crawlerInfos = configUtil.getCrawlerMap().values();
+        Collection<String> crawlerInfos = ConfigUtil.getCrawlerMap().values();
         for (String crawlerInfo : crawlerInfos) {
             String hostname = crawlerInfo.split(":")[0];
             int port = Integer.parseInt(crawlerInfo.split(":")[1]);
