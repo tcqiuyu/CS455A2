@@ -1,7 +1,7 @@
 package cs455.wireformat;
 
 import cs455.wireformat.proto.NodeHandoffTask;
-import cs455.wireformat.proto.NodeRespondTaskFinish;
+import cs455.wireformat.proto.NodeReportStatus;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -36,7 +36,7 @@ public class EventFactory {
                 case Protocol.NODE_HANDOFF_TASK:
                     return new NodeHandoffTask(data);
                 case Protocol.NODE_RESPOND_TASK_FINISH:
-                    return new NodeRespondTaskFinish(data);
+                    return new NodeReportStatus(data);
                 default:
                     System.err.println("No such message type: " + type);
                     return null;

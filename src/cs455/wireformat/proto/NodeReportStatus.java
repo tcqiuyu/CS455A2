@@ -8,24 +8,31 @@ import java.io.*;
 /**
  * Created by Qiu on 3/8/15.
  */
-public class NodeRespondTaskFinish implements Event {
+public class NodeReportStatus implements Event {
 
     private final int type = Protocol.NODE_RESPOND_TASK_FINISH;
+    private int status;
 
-    public NodeRespondTaskFinish() {
+    public NodeReportStatus(int status) {
+        this.status = status;
     }
 
-    public NodeRespondTaskFinish(byte[] marshalledBytes) throws IOException {
+    public NodeReportStatus(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         int type = din.readInt();
 
-        if (type != this.type) {
+        if (type == this.type) {
+            this.status = din.readInt();
+        } else {
             System.out.println("Message Type does not match");
         }
-
         din.close();
+    }
+
+    public int getStatus() {
+        return status;
     }
 
     @Override
@@ -41,7 +48,7 @@ public class NodeRespondTaskFinish implements Event {
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
         dout.writeInt(type);
-
+        dout.write(status);
         dout.flush();
 
         marshalledBytes = baOutputStream.toByteArray();
