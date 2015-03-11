@@ -7,9 +7,8 @@ import java.util.ArrayList;
  */
 public class ThreadPoolManager {
 
-    private int size;
     private final ArrayList<Thread> workerThreads;
-
+    private int size;
     private volatile boolean isFinish;
 
     public ThreadPoolManager(int size) {
@@ -18,15 +17,31 @@ public class ThreadPoolManager {
         init();
     }
 
+//    public static void main(String[] args) {
+//        ThreadPoolManager manager = new ThreadPoolManager(3);
+//
+//        for (int j = 0; j < 6; j++) {
+//            Task task1 = new Task() {
+//                @Override
+//                public void doTask() {
+//                    System.out.println("Thread" + " is executing task: ");
+//                }
+//            };
+//            TaskQueue.getInstance().addTask(task1);
+//        }
+//
+//        manager.shutdown();
+//
+//    }
+
     public void init() {
         isFinish = false;
         for (int i = 0; i < size; i++) {
-            WorkerThread aThread = new WorkerThread();
+            WorkerThread aThread = new WorkerThread(i);
             workerThreads.add(aThread);
-            aThread.run();
+            aThread.start();
         }
     }
-
 
     public void shutdown() {
 
@@ -45,18 +60,31 @@ public class ThreadPoolManager {
     }
 
     private class WorkerThread extends Thread {
+        private int id;
+
+        public WorkerThread(int id) {
+            this.id = id;
+        }
 
         @Override
         public void run() {
+
             while (!isFinish) {
                 try {
 //                    System.out.println(TaskQueue.getInstance().getTaskCount());
+//                    System.out.println("Thread " + id + " is executing task");
                     Task task = TaskQueue.getInstance().getTask();
                     task.doTask();
+                    System.out.println("Sleeping.......");
+                    sleep(20000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
+                    System.out.println("Shutdown!");
                 }
             }
+//
+
+
         }
     }
 }

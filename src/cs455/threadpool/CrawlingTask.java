@@ -1,6 +1,7 @@
 package cs455.threadpool;
 
-import cs455.harvester.Crawler;
+import cs455.graph.Graph;
+import cs455.graph.Vertex;
 import cs455.transport.TCPConnection;
 import cs455.util.ConfigUtil;
 import cs455.util.URLUtil;
@@ -13,41 +14,53 @@ import java.io.IOException;
  */
 public class CrawlingTask implements Task {
 
-    private String url;
+    private String srcUrl;
+    private String destUrl;
     private int depth;
     private ConfigUtil configUtil;
 
-    public CrawlingTask(String url, int depth, ConfigUtil configUtil) {
-        this.url = url;
+    public CrawlingTask(String srcUrl, String destUrl, int depth, ConfigUtil configUtil) {
+        this.srcUrl = srcUrl;
+        this.destUrl = destUrl;
         this.depth = depth;
         this.configUtil = configUtil;
+
     }
 
     @Override
     public void doTask() {
         if (depth > 5) {
-            System.out.println();
+            System.out.println("Depth reached");
             return;
         }
 
         //URL in local domain
-        if (URLUtil.withinDomain(url)) {
+        if (URLUtil.withinDomain(destUrl)) {
+//            System.out.println(URLUtil.withinDomain("http://www.biology.colostate.edu/"));
             depth++;
-            for (String extractedUrl : URLUtil.getInstance().extractUrl(url)) {
-                CrawlingTask newTask = new CrawlingTask(extractedUrl, depth, configUtil);
+//            System.out.println("HERE: Depth = " + depth);
+            for (String extractedUrl : URLUtil.getInstance().extractUrl(destUrl)) {
+                if (srcUrl != null) {
+                    Vertex vertex = new Vertex(destUrl);
+                    Graph.getInstance().addVertex(vertex);
+//                    Graph.getInstance().
+
+                }
+                CrawlingTask newTask = new CrawlingTask(destUrl, extractedUrl, depth, configUtil);
                 TaskQueue.getInstance().addTask(newTask);
-                System.out.println(extractedUrl);
+                System.out.println(destUrl + " ------> " + extractedUrl);
             }
-        } else if (URLUtil.isTargetDomain(url)) {//URL in other target domain
+        } else if (URLUtil.isTargetDomain(destUrl)) {//URL in other target domain
             try {
-                TCPConnection connection = configUtil.getConnectionToCrawler(url);
-                NodeHandoffTask handoffTask = new NodeHandoffTask()
-                connection.sendData();
+                TCPConnection connection = configUtil.getConnectionToCrawler(destUrl);
+                NodeHandoffTask handoffTask = new NodeHandoffTask(srcUrl, destUrl);
+                connection.sendData(handoffTask.getBytes());
             } catch (IOException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
             }
 
         }
+
     }
 
 }

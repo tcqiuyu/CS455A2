@@ -1,5 +1,6 @@
 package cs455.util;
 
+import cs455.graph.Graph;
 import cs455.harvester.Crawler;
 import net.htmlparser.jericho.*;
 
@@ -121,40 +122,48 @@ public class URLUtil {
         return normalized;
     }
 
-    public void addProcessedUrl(String url) {
-        synchronized (processedURLs) {
-            processedURLs.put(url, null);
-        }
-    }
-
-    private String resolveRedirects(String url) {
+    public String resolveRedirects(String url) {
         HttpURLConnection con;
         try {
             con = (HttpURLConnection) (new URL(url).openConnection());
+//            con.connect();
+//            InputStream inputStream = con.getInputStream();
+//            url = con.getURL().toString();
+
             con.setInstanceFollowRedirects(false);
             con.connect();
             int responseCode = con.getResponseCode();
             if (responseCode == 301) {
                 return con.getHeaderField("Location");
             }
+            con.disconnect();
         } catch (IOException e) {
             addToBadUrls(url);
         }
         return url;
     }
 
+    public void addProcessedUrl(String url) {
+        synchronized (processedURLs) {
+            processedURLs.put(url, null);
+        }
+    }
+
     public Set<String> extractUrl(String pageUrl) {
+//        System.out.println("------------" + resolveRedirects("http://www.cs.colostate.edu"));
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
 
         try {
-            String redirectedUrl = resolveRedirects(pageUrl);
-            Source source = new Source(new URL(redirectedUrl));
+//            String redirectedUrl = resolveRedirects(pageUrl);
+            Source source = new Source(new URL(pageUrl));
 
             List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
             for (Element aTag : aTags) {
+                long start = System.currentTimeMillis();
+
                 String href = aTag.getAttributeValue("href");
 
                 if (!isValidHREF(href)) {
@@ -166,28 +175,42 @@ public class URLUtil {
                 }
                 href = normalize(href);
                 href = "http://" + (new URL(href)).getAuthority() + (new URL(href)).getPath();
-
+//                System.out.println(href);
                 if (isProcessed(href)) {
+                    Graph.getInstance().addLink(pageUrl, href);
                     continue;
-                }
-
-                if (!isTargetDomain(href)) {
+                } else if (!isTargetDomain(href) || !validPage(href)) {
                     continue;
                 }
 
                 addProcessedUrl(href);
+                href = resolveRedirects(href);
                 extractedUrls.add(href);
+                long end = System.currentTimeMillis();
+                long dur = end - start;
+                System.out.println("Time: " + dur + "-----> added: ----->" + href);
             }
 
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         } catch (IOException e) {
+//            System.out.println(e.getMessage());
             addToBadUrls(pageUrl);
         } catch (URISyntaxException e) {
-            System.out.println(e.getMessage());
+//            System.out.println(e.getMessage());
             addProcessedUrl(pageUrl);
         }
+//        System.out.println(extractedUrls.size());
+        System.out.println("LOOP OUT!");
         return extractedUrls;
+    }
+
+    private boolean validPage(String href) {
+        String[] dotDelim = href.split("\\.");
+        String end = dotDelim[dotDelim.length - 1];
+        return end.contains("html") || end.contains("htm") || end.contains("php") ||
+                end.contains("shtml") || end.contains("/") || end.contains("asp") ||
+                end.contains("jsp") || end.contains("cfm");
     }
 
     public boolean isProcessed(String url) {
@@ -207,4 +230,6 @@ public class URLUtil {
             badURLs.put(url, null);
         }
     }
+
+
 }

@@ -1,5 +1,7 @@
 package cs455.harvester;
 
+import cs455.graph.Graph;
+import cs455.graph.Vertex;
 import cs455.threadpool.CrawlingTask;
 import cs455.threadpool.TaskQueue;
 import cs455.threadpool.ThreadPoolManager;
@@ -58,13 +60,28 @@ public class Crawler implements Node {
         eventHandler = new EventHandler(this);
         serverThread.start();
         try {
+            Thread.sleep(10000);
+            System.out.println("HERE");
             initConnection();
+
         } catch (IOException e) {
 //            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-        CrawlingTask initTask = new CrawlingTask(rootURL, 0, configUtil);
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        CrawlingTask initTask = new CrawlingTask(null, rootURL, 1, configUtil);
         TaskQueue.getInstance().addTask(initTask);
+
+        Vertex root = new Vertex(rootURL);
+        Graph.getInstance().addVertex(root);
+
         threadPoolManager = new ThreadPoolManager(poolSize);
 
     }

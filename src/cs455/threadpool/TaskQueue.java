@@ -40,6 +40,8 @@ public class TaskQueue {
     }
 
     public boolean isEmpty() {
-        return taskQueue.isEmpty();
+        synchronized (taskQueue) {
+            return taskQueue.isEmpty();
+        }
     }
 }
