@@ -8,7 +8,7 @@ import java.util.HashMap;
 public class Graph {
 
     private static final Graph instance = new Graph();
-    private HashMap<String, Vertex> graph = new HashMap<String, Vertex>();
+    private final HashMap<String, Vertex> graph = new HashMap<String, Vertex>();
 
     private Graph() {
     }
@@ -35,25 +35,20 @@ public class Graph {
 
     public void addLink(String srcUrl, String destUrl) {
         try {
-            graph.get(destUrl).addLink(srcUrl, 0);
+            getVertex(destUrl).addInLink(srcUrl);
         } catch (NullPointerException e) {
             Vertex newVert = new Vertex(destUrl);
             addVertex(newVert);
-            newVert.addLink(srcUrl, 0);
+            newVert.addInLink(srcUrl);
         }
 
         try {
-            graph.get(srcUrl).addLink(destUrl, 1);
+            getVertex(srcUrl).addOutLink(destUrl);
         } catch (NullPointerException e) {
             Vertex newVert = new Vertex(srcUrl);
             addVertex(newVert);
-            newVert.addLink(destUrl, 1);
+            newVert.addOutLink(destUrl);
         }
     }
-
-    public boolean containsURL(String url) {
-        return graph.containsKey(url);
-    }
-
 
 }

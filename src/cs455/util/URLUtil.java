@@ -5,6 +5,7 @@ import cs455.harvester.Crawler;
 import net.htmlparser.jericho.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.util.*;
 
@@ -26,7 +27,7 @@ public class URLUtil {
 
     public static boolean withinDomain(String pageUrl) {
         try {
-            return new URL(pageUrl).getHost().equals(new URL(Crawler.rootURL).getHost());
+            return new URL(pageUrl).getHost().equals(new URL(Crawler.getRootUrl()).getHost());
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return false;
@@ -39,6 +40,7 @@ public class URLUtil {
             urlDomain = getDomain(url);
 //            System.out.println(url + "----->" + urlDomain);
         } catch (MalformedURLException e) {
+
             e.printStackTrace();
         }
         return ConfigUtil.getCrawlerMap().containsKey(urlDomain);
@@ -119,28 +121,21 @@ public class URLUtil {
             }
         }
 
+        if (normalized.endsWith("#")) {
+            normalized = normalized.substring(0, normalized.length() - 2);
+        }
+
         return normalized;
     }
 
-    public String resolveRedirects(String url) {
-        HttpURLConnection con;
-        try {
-            con = (HttpURLConnection) (new URL(url).openConnection());
-//            con.connect();
-//            InputStream inputStream = con.getInputStream();
-//            url = con.getURL().toString();
+    public String resolveRedirects(String url) throws IOException {
 
-            con.setInstanceFollowRedirects(false);
-            con.connect();
-            int responseCode = con.getResponseCode();
-            if (responseCode == 301) {
-                return con.getHeaderField("Location");
-            }
-            con.disconnect();
-        } catch (IOException e) {
-            addToBadUrls(url);
-        }
-        return url;
+        HttpURLConnection connection = (HttpURLConnection) (new URL(url).openConnection());
+        connection.connect();
+        //cannot omit
+        connection.getInputStream();
+
+        return connection.getURL().toString();
     }
 
     public void addProcessedUrl(String url) {
@@ -151,12 +146,17 @@ public class URLUtil {
 
     public Set<String> extractUrl(String pageUrl) {
 //        System.out.println("------------" + resolveRedirects("http://www.cs.colostate.edu"));
+//        addProcessedUrl(pageUrl);
+
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
 
         try {
-//            String redirectedUrl = resolveRedirects(pageUrl);
+//            String resolvedUrl = resolveRedirects(pageUrl);
+            addProcessedUrl(pageUrl);
+//            System.out.println("redirected url is: " + pageUrl + "------>" + resolvedUrl);
+
             Source source = new Source(new URL(pageUrl));
 
             List<Element> aTags = source.getAllElements(HTMLElementName.A);
@@ -185,10 +185,12 @@ public class URLUtil {
 
                 addProcessedUrl(href);
                 href = resolveRedirects(href);
+//                System.out.println("resolving redirects for " + href + ".....");
                 extractedUrls.add(href);
+                Graph.getInstance().addLink(pageUrl, href);
                 long end = System.currentTimeMillis();
                 long dur = end - start;
-                System.out.println("Time: " + dur + "-----> added: ----->" + href);
+                System.out.println("Time: " + dur + "-----> added: " + pageUrl + " ----->" + href);
             }
 
         } catch (MalformedURLException e) {
@@ -201,7 +203,7 @@ public class URLUtil {
             addProcessedUrl(pageUrl);
         }
 //        System.out.println(extractedUrls.size());
-        System.out.println("LOOP OUT!");
+//        System.out.println("LOOP OUT!");
         return extractedUrls;
     }
 

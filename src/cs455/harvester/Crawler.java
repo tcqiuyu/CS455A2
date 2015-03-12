@@ -9,6 +9,7 @@ import cs455.transport.ConnectionFactory;
 import cs455.transport.TCPServerThread;
 import cs455.util.ConfigUtil;
 import cs455.util.EventHandler;
+import cs455.util.URLUtil;
 import cs455.wireformat.Event;
 import cs455.wireformat.Protocol;
 
@@ -22,7 +23,8 @@ import java.util.Collection;
  */
 public class Crawler implements Node {
 
-    public static String rootURL;
+    public static final int MAX_DEPTH = 2;
+    private static String rootURL;
 
     private int port;
     private int poolSize;
@@ -39,7 +41,11 @@ public class Crawler implements Node {
         this.confPath = confPath;
     }
 
-    public static void main(String[] args) {
+    public static String getRootUrl() {
+        return rootURL;
+    }
+
+    public static void main(String[] args) throws IOException {
         if (args.length != 4) {
             System.out.println("Usage: java cs455.harvester.Crawler portnum thread-pool-size root-url path-to-config-file");
         }
@@ -48,42 +54,45 @@ public class Crawler implements Node {
         int poolSize = Integer.parseInt(args[1]);
         String root = args[2];
         String confPath = args[3];
-        rootURL = root;
+        rootURL = URLUtil.getInstance().resolveRedirects(root);
         Crawler crawler = new Crawler(port, poolSize, confPath);
 
         crawler.init();
+
     }
 
     public void init() {
         serverThread = new TCPServerThread(this, port);
         configUtil = new ConfigUtil(confPath, this);
-        eventHandler = new EventHandler(this);
+        eventHandler = new EventHandler(this, configUtil);
+
         serverThread.start();
         try {
-            Thread.sleep(10000);
-            System.out.println("HERE");
+            Thread.sleep(1000);
+            System.out.println("Main Thread Starts...");
             initConnection();
 
         } catch (IOException e) {
 //            e.printStackTrace();
         } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//            e.printStackTrace();
 
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
+        threadPoolManager = new ThreadPoolManager(poolSize);
 
-        CrawlingTask initTask = new CrawlingTask(null, rootURL, 1, configUtil);
+        CrawlingTask initTask = new CrawlingTask(null, rootURL, 1, threadPoolManager, configUtil);
         TaskQueue.getInstance().addTask(initTask);
-
+        URLUtil.getInstance().addProcessedUrl(rootURL);
         Vertex root = new Vertex(rootURL);
         Graph.getInstance().addVertex(root);
 
-        threadPoolManager = new ThreadPoolManager(poolSize);
 
+//        try {
+//            Thread.sleep(10000);
+//            threadPoolManager.shutdown();
+//        } catch (InterruptedException e) {
+////            e.printStackTrace();
+//        }
     }
 
     private void initConnection() throws IOException {
@@ -106,11 +115,15 @@ public class Crawler implements Node {
         switch (type) {
             case Protocol.NODE_HANDOFF_TASK:
                 eventHandler.handleHandoffTask(event);
-            case Protocol.NODE_RESPOND_TASK_FINISH:
+            case Protocol.NODE_REPORT_STATUS:
                 eventHandler.handleStatusReport(event);
             default:
                 System.out.println("Unrecognized message type");
         }
 
+    }
+
+    public ThreadPoolManager getThreadPoolManager() {
+        return threadPoolManager;
     }
 }

@@ -10,7 +10,7 @@ import java.io.*;
  */
 public class NodeReportStatus implements Event {
 
-    private final int type = Protocol.NODE_RESPOND_TASK_FINISH;
+    private final int type = Protocol.NODE_REPORT_STATUS;
     private int status;
 
     public NodeReportStatus(int status) {

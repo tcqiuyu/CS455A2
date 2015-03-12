@@ -20,7 +20,7 @@ public class ThreadPoolManager {
 //    public static void main(String[] args) {
 //        ThreadPoolManager manager = new ThreadPoolManager(3);
 //
-//        for (int j = 0; j < 6; j++) {
+//        for (int j = 0; j < 100; j++) {
 //            Task task1 = new Task() {
 //                @Override
 //                public void doTask() {
@@ -39,24 +39,30 @@ public class ThreadPoolManager {
         for (int i = 0; i < size; i++) {
             WorkerThread aThread = new WorkerThread(i);
             workerThreads.add(aThread);
+
             aThread.start();
         }
     }
 
     public void shutdown() {
 
+        System.out.println("Shutting Down...");
         while (!TaskQueue.getInstance().isEmpty()) {
             try {
+
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            isFinish = true;
-            for (Thread thread : workerThreads) {
-                thread.interrupt();
+//                e.printStackTrace();
             }
         }
+
+        isFinish = true;
+        for (Thread thread : workerThreads) {
+            System.out.println("Interrupting thread: " + thread.getName());
+            thread.interrupt();
+        }
+
+
     }
 
     private class WorkerThread extends Thread {
@@ -72,19 +78,16 @@ public class ThreadPoolManager {
             while (!isFinish) {
                 try {
 //                    System.out.println(TaskQueue.getInstance().getTaskCount());
-//                    System.out.println("Thread " + id + " is executing task");
                     Task task = TaskQueue.getInstance().getTask();
+                    System.out.println("Thread " + id + " is executing task" + task.toString());
                     task.doTask();
-                    System.out.println("Sleeping.......");
+                    System.out.println("Thread " + id + " is sleeping.......");
                     sleep(20000);
                 } catch (InterruptedException e) {
 //                    e.printStackTrace();
-                    System.out.println("Shutdown!");
+                    System.out.println("Shutdown Thread " + id + "!");
                 }
             }
-//
-
-
         }
     }
 }

@@ -12,6 +12,7 @@ public class TaskQueue {
     private final Queue<Task> taskQueue = new LinkedList<Task>();
 
     private TaskQueue() {
+
     }
 
     public static TaskQueue getInstance() {

@@ -6,5 +6,5 @@ package cs455.wireformat;
 public interface Protocol {
 
     static final int NODE_HANDOFF_TASK = 0;
-    static final int NODE_RESPOND_TASK_FINISH = 1;
+    static final int NODE_REPORT_STATUS = 1;
 }

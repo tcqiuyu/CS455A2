@@ -35,7 +35,7 @@ public class EventFactory {
             switch (type) {
                 case Protocol.NODE_HANDOFF_TASK:
                     return new NodeHandoffTask(data);
-                case Protocol.NODE_RESPOND_TASK_FINISH:
+                case Protocol.NODE_REPORT_STATUS:
                     return new NodeReportStatus(data);
                 default:
                     System.err.println("No such message type: " + type);
