@@ -3,7 +3,6 @@ package cs455.harvester;
 import cs455.graph.Graph;
 import cs455.graph.Vertex;
 import cs455.threadpool.CrawlingTask;
-import cs455.threadpool.TaskQueue;
 import cs455.threadpool.ThreadPoolManager;
 import cs455.transport.ConnectionFactory;
 import cs455.transport.TCPServerThread;
@@ -34,6 +33,8 @@ public class Crawler implements Node {
     private ConfigUtil configUtil;
     private ThreadPoolManager threadPoolManager;
     private EventHandler eventHandler;
+    private volatile int relayMessageCount = 0;
+    private volatile int finishedCrawlersCount = 0;
 
     public Crawler(int port, int poolSize, String confPath) {
         this.port = port;
@@ -61,10 +62,33 @@ public class Crawler implements Node {
 
     }
 
+    public synchronized void incrementRelayMessageCount() {
+        relayMessageCount++;
+    }
+
+    public synchronized void decrementRelayMessageCount() {
+        relayMessageCount--;
+    }
+
+    public synchronized void incrementfinishedCrawlersCount() {
+        finishedCrawlersCount++;
+    }
+
+    public synchronized void decrementfinishedCrawlersCount() {
+        finishedCrawlersCount--;
+    }
+
+    public int getRelayMessageCount() {
+        return relayMessageCount;
+    }
+
+    public boolean isFinished() {
+        return getRelayMessageCount() == 0 && finishedCrawlersCount == ConfigUtil.getCrawlerCount();
+    }
+
     public void init() {
         serverThread = new TCPServerThread(this, port);
         configUtil = new ConfigUtil(confPath, this);
-        eventHandler = new EventHandler(this, configUtil);
 
         serverThread.start();
         try {
@@ -73,26 +97,21 @@ public class Crawler implements Node {
             initConnection();
 
         } catch (IOException e) {
-//            e.printStackTrace();
         } catch (InterruptedException e) {
-//            e.printStackTrace();
-
         }
-        threadPoolManager = new ThreadPoolManager(poolSize);
 
-        CrawlingTask initTask = new CrawlingTask(null, rootURL, 1, threadPoolManager, configUtil);
-        TaskQueue.getInstance().addTask(initTask);
+        threadPoolManager = new ThreadPoolManager(poolSize, this);
+        eventHandler = new EventHandler(configUtil, this);
+
+        CrawlingTask initTask = new CrawlingTask(null, rootURL, 1, configUtil, false, this);
+//        TaskQueue.getInstance().addTask(initTask);
+        threadPoolManager.addTask(initTask);
+
         URLUtil.getInstance().addProcessedUrl(rootURL);
+
         Vertex root = new Vertex(rootURL);
         Graph.getInstance().addVertex(root);
-
-
-//        try {
-//            Thread.sleep(10000);
-//            threadPoolManager.shutdown();
-//        } catch (InterruptedException e) {
-////            e.printStackTrace();
-//        }
+        threadPoolManager.init();
     }
 
     private void initConnection() throws IOException {
@@ -104,12 +123,13 @@ public class Crawler implements Node {
         }
     }
 
+
     public InetAddress getHostAddress() throws UnknownHostException {
         return InetAddress.getLocalHost();
     }
 
     @Override
-    public void onEvent(Event event, String srcAddr) {
+    public void onEvent(Event event) {
 
         int type = event.getType();
         switch (type) {
@@ -117,6 +137,8 @@ public class Crawler implements Node {
                 eventHandler.handleHandoffTask(event);
             case Protocol.NODE_REPORT_STATUS:
                 eventHandler.handleStatusReport(event);
+            case Protocol.NODE_REPORT_HANDOFF_TASK_FINISHED:
+                eventHandler.handleReportHandoffTask(event);
             default:
                 System.out.println("Unrecognized message type");
         }
@@ -126,4 +148,5 @@ public class Crawler implements Node {
     public ThreadPoolManager getThreadPoolManager() {
         return threadPoolManager;
     }
+
 }

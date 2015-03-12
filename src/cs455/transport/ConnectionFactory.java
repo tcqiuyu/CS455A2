@@ -1,9 +1,12 @@
 package cs455.transport;
 
 import cs455.harvester.Node;
+import cs455.util.ConfigUtil;
+import cs455.util.URLUtil;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +29,13 @@ public class ConnectionFactory {
 
     public synchronized void register(TCPConnection connection, String hostname, int port) {
         connectionMap.put(genKey(hostname, port), connection);
+    }
+
+
+
+    public synchronized TCPConnection getConnection(String url) throws MalformedURLException {
+        String key = ConfigUtil.getCrawlerMap().get(URLUtil.getDomain(url));
+        return connectionMap.get(key);
     }
 
     public synchronized TCPConnection getConnection(String hostname, int port, InetAddress srcAddr, Node node) throws IOException {

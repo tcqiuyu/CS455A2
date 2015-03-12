@@ -1,16 +1,13 @@
 package cs455.threadpool;
 
-import cs455.graph.Graph;
-import cs455.graph.Vertex;
 import cs455.harvester.Crawler;
-import cs455.transport.TCPConnection;
 import cs455.util.ConfigUtil;
+import cs455.util.TransportUtil;
 import cs455.util.URLUtil;
 import cs455.wireformat.proto.NodeHandoffTask;
+import cs455.wireformat.proto.NodeReportHandoffTaskFinished;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,62 +18,61 @@ public class CrawlingTask implements Task {
     private String srcUrl;
     private String destUrl;
     private int depth;
+    private boolean isRelayed;
+
     private ConfigUtil configUtil;
+    private Crawler crawler;
     private ThreadPoolManager threadPoolManager;
 
-    public CrawlingTask(String srcUrl, String destUrl, int depth, ThreadPoolManager threadPoolManager, ConfigUtil configUtil) {
+    public CrawlingTask(String srcUrl, String destUrl, int depth, ConfigUtil configUtil, boolean isRelayed, Crawler crawler) {
         this.srcUrl = srcUrl;
         this.destUrl = destUrl;
         this.depth = depth;
         this.configUtil = configUtil;
-        this.threadPoolManager = threadPoolManager;
+        this.isRelayed = isRelayed;
+        this.crawler = crawler;
+        threadPoolManager = crawler.getThreadPoolManager();
     }
 
     @Override
     public void doTask() {
         if (depth > Crawler.MAX_DEPTH) {
-            System.out.println("Depth reached");
-            Iterator<String> iterator = Graph.getInstance().getGraph().keySet().iterator();
-            for (Map.Entry<String, Vertex> entry : Graph.getInstance().getGraph().entrySet()) {
-                Set<String> inLinks = entry.getValue().getInLinks();
-                Set<String> outLinks = entry.getValue().getOutLinks();
-                System.out.println(entry.getKey() + " --------> " + "inlinks: " + inLinks.size() + " outlinks: " + outLinks.size());
-            }
-            threadPoolManager.shutdown();
             return;
         }
 
         //URL in local domain
         if (URLUtil.withinDomain(destUrl)) {
-//            System.out.println(URLUtil.withinDomain("http://www.biology.colostate.edu/"));
-            System.out.println("Current depth: -------->" + depth);
             depth++;
             Set<String> extractedUrls = URLUtil.getInstance().extractUrl(destUrl);
             if (extractedUrls != null) {
                 for (String extractedUrl : extractedUrls) {
-//                    if (srcUrl != null) {
-                    if (!Graph.getInstance().getGraph().containsKey(destUrl)) {
-                        Vertex vertex = new Vertex(destUrl);
-                        Graph.getInstance().addVertex(vertex);
-//                        }
-                    }
-                    CrawlingTask newTask = new CrawlingTask(destUrl, extractedUrl, depth, threadPoolManager, configUtil);
-                    TaskQueue.getInstance().addTask(newTask);
+//                    if (!Graph.getInstance().getGraph().containsKey(destUrl)) {
+//                        Vertex vertex = new Vertex(destUrl);
+//                        Graph.getInstance().addVertex(vertex);
+//                    }
+                    CrawlingTask newTask = new CrawlingTask(destUrl, extractedUrl, depth, configUtil, false, crawler);
+                    threadPoolManager.addTask(newTask);
                     System.out.println(destUrl + " ------> " + extractedUrl);
-                    System.out.println("Task queue empty??------>"+TaskQueue.getInstance().getTaskCount());
-
                 }
-
             }
         } else if (URLUtil.isTargetDomain(destUrl)) {//URL in other target domain
             try {
-                TCPConnection connection = configUtil.getConnectionToCrawler(destUrl);
                 NodeHandoffTask handoffTask = new NodeHandoffTask(srcUrl, destUrl);
-                connection.sendData(handoffTask.getBytes());
+                TransportUtil.sendMessage(destUrl, handoffTask);
+                crawler.incrementRelayMessageCount();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
 
+        }
+
+        if (isRelayed) {
+            NodeReportHandoffTaskFinished taskFinished = new NodeReportHandoffTaskFinished();
+            try {
+                TransportUtil.sendMessage(srcUrl, taskFinished);
+            } catch (IOException e) {
+//                e.printStackTrace();
+            }
         }
     }
 

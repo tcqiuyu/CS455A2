@@ -11,11 +11,19 @@ import java.net.InetAddress;
 /**
  * Created by Qiu on 3/9/2015.
  */
-public class MessagingUtil {
+public class TransportUtil {
 
     public static void sendMessage(String destAddress, int destPort, Event event, InetAddress srcAddr, Node node)
             throws IOException {
         TCPConnection conn = ConnectionFactory.getInstance().getConnection(destAddress, destPort, srcAddr, node);
+//        TCPConnection connection = ConnectionFactory.getInstance().
+        conn.sendData(event.getBytes());
+    }
+
+    public static void sendMessage(String url, Event event)
+            throws IOException {
+        TCPConnection conn = ConnectionFactory.getInstance().getConnection(url);
+//        TCPConnection connection = ConnectionFactory.getInstance().
         conn.sendData(event.getBytes());
     }
 }

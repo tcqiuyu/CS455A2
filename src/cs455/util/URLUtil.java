@@ -5,7 +5,6 @@ import cs455.harvester.Crawler;
 import net.htmlparser.jericho.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.*;
 import java.util.*;
 
@@ -17,6 +16,7 @@ public class URLUtil {
     private static final URLUtil instance = new URLUtil();
     private static final Map<String, String> processedURLs = new HashMap<String, String>();
     private static final Map<String, String> badURLs = new HashMap<String, String>();
+    private volatile int threadsCount = 0;
 
     private URLUtil() {
     }
@@ -128,6 +128,10 @@ public class URLUtil {
         return normalized;
     }
 
+    public int getThreadsCount() {
+        return threadsCount;
+    }
+
     public String resolveRedirects(String url) throws IOException {
 
         HttpURLConnection connection = (HttpURLConnection) (new URL(url).openConnection());
@@ -145,24 +149,23 @@ public class URLUtil {
     }
 
     public Set<String> extractUrl(String pageUrl) {
-//        System.out.println("------------" + resolveRedirects("http://www.cs.colostate.edu"));
-//        addProcessedUrl(pageUrl);
+
+        synchronized (this) {
+            threadsCount++;
+        }
 
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
 
         try {
-//            String resolvedUrl = resolveRedirects(pageUrl);
             addProcessedUrl(pageUrl);
-//            System.out.println("redirected url is: " + pageUrl + "------>" + resolvedUrl);
 
             Source source = new Source(new URL(pageUrl));
 
             List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
             for (Element aTag : aTags) {
-                long start = System.currentTimeMillis();
 
                 String href = aTag.getAttributeValue("href");
 
@@ -175,7 +178,6 @@ public class URLUtil {
                 }
                 href = normalize(href);
                 href = "http://" + (new URL(href)).getAuthority() + (new URL(href)).getPath();
-//                System.out.println(href);
                 if (isProcessed(href)) {
                     Graph.getInstance().addLink(pageUrl, href);
                     continue;
@@ -185,12 +187,10 @@ public class URLUtil {
 
                 addProcessedUrl(href);
                 href = resolveRedirects(href);
-//                System.out.println("resolving redirects for " + href + ".....");
                 extractedUrls.add(href);
                 Graph.getInstance().addLink(pageUrl, href);
-                long end = System.currentTimeMillis();
-                long dur = end - start;
-                System.out.println("Time: " + dur + "-----> added: " + pageUrl + " ----->" + href);
+                System.out.println("added: " + pageUrl + " ----->" + href);
+//                System.out.println("-----------Now there are " + getThreadsCount() + " threads in URLutil---------------");
             }
 
         } catch (MalformedURLException e) {

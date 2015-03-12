@@ -5,6 +5,7 @@ import cs455.wireformat.Event;
 import cs455.wireformat.EventFactory;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -31,7 +32,7 @@ public class TCPReceiverThread extends Thread {
                     byte[] data = new byte[dataLength];
                     dataInputStream.readFully(data, 0, dataLength);
                     Event event = EventFactory.getInstance().getEvent(data);
-                    node.onEvent(event, socket.getInetAddress().getHostAddress());
+                    node.onEvent(event);
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage());
@@ -39,4 +40,5 @@ public class TCPReceiverThread extends Thread {
             }
         }
     }
+
 }

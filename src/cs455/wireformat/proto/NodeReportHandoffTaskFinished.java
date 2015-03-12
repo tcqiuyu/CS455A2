@@ -6,35 +6,27 @@ import cs455.wireformat.Protocol;
 import java.io.*;
 
 /**
- * Created by Qiu on 3/8/15.
+ * Created by Qiu on 3/12/2015.
  */
-public class NodeReportStatus implements Event {
+public class NodeReportHandoffTaskFinished implements Event{
 
-    private final int type = Protocol.NODE_REPORT_STATUS;
-    public static final int CRAWLER_REPORT_UNFINISHED=0;
-    public static final int CRAWLER_REPORT_FINISHED=1;
-    private int status;
+    private final int type = Protocol.NODE_REPORT_HANDOFF_TASK_FINISHED;
 
-    public NodeReportStatus(int status) {
-        this.status = status;
+    public NodeReportHandoffTaskFinished() {
+
     }
 
-    public NodeReportStatus(byte[] marshalledBytes) throws IOException {
+    public NodeReportHandoffTaskFinished(byte[] marshalledBytes) throws IOException {
         ByteArrayInputStream baInputStream = new ByteArrayInputStream(marshalledBytes);
         DataInputStream din = new DataInputStream(new BufferedInputStream(baInputStream));
 
         int type = din.readInt();
 
         if (type == this.type) {
-            this.status = din.readInt();
         } else {
             System.out.println("Message Type does not match");
         }
         din.close();
-    }
-
-    public int getStatus() {
-        return status;
     }
 
     @Override
@@ -50,7 +42,6 @@ public class NodeReportStatus implements Event {
         DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
         dout.writeInt(type);
-        dout.write(status);
         dout.flush();
 
         marshalledBytes = baOutputStream.toByteArray();

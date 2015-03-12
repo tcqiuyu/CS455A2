@@ -34,6 +34,10 @@ public class ConfigUtil {
         return crawlerMap.keySet();
     }
 
+    public static int getCrawlerCount() {
+        return crawlerMap.size();
+    }
+
     private void readConfFile(File conf) {
         BufferedReader bufferedReader = null;
 

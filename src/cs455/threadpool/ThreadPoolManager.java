@@ -1,6 +1,11 @@
 package cs455.threadpool;
 
+import cs455.harvester.Crawler;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Created by Qiu on 3/7/15.
@@ -8,31 +13,25 @@ import java.util.ArrayList;
 public class ThreadPoolManager {
 
     private final ArrayList<Thread> workerThreads;
+    private Queue<Task> taskQueue = new LinkedList<Task>();
     private int size;
     private volatile boolean isFinish;
+    private Crawler crawler;
 
-    public ThreadPoolManager(int size) {
+    public ThreadPoolManager(int size, Crawler crawler) {
         this.size = size;
         workerThreads = new ArrayList<Thread>(size);
-        init();
+        this.crawler = crawler;
+//        init();
     }
 
-//    public static void main(String[] args) {
-//        ThreadPoolManager manager = new ThreadPoolManager(3);
-//
-//        for (int j = 0; j < 100; j++) {
-//            Task task1 = new Task() {
-//                @Override
-//                public void doTask() {
-//                    System.out.println("Thread" + " is executing task: ");
-//                }
-//            };
-//            TaskQueue.getInstance().addTask(task1);
-//        }
-//
-//        manager.shutdown();
-//
-//    }
+    public void addTask(Task task) {
+        synchronized (taskQueue) {
+//            System.out.println("Adding task: " + task.toString());
+            taskQueue.add(task);
+            taskQueue.notifyAll();
+        }
+    }
 
     public void init() {
         isFinish = false;
@@ -42,28 +41,27 @@ public class ThreadPoolManager {
 
             aThread.start();
         }
-    }
 
-    public void shutdown() {
-
-        System.out.println("Shutting Down...");
-        while (!TaskQueue.getInstance().isEmpty()) {
+        for (Thread thread : workerThreads) {
             try {
-
-                Thread.sleep(1000);
+                thread.join();
             } catch (InterruptedException e) {
-//                e.printStackTrace();
             }
         }
-
-        isFinish = true;
-        for (Thread thread : workerThreads) {
-            System.out.println("Interrupting thread: " + thread.getName());
-            thread.interrupt();
-        }
-
-
     }
+//
+//    public void shutdown() {
+//
+//        System.out.println("Shutting Down...");
+//        while (!TaskQueue.getInstance().isEmpty() && URLUtil.getInstance().getThreadsCount() == 0) {
+//            try {
+//                Thread.sleep(1000);
+//            } catch (InterruptedException e) {
+////                e.printStackTrace();
+//            }
+//        }
+//        isFinish = true;
+//    }
 
     private class WorkerThread extends Thread {
         private int id;
@@ -75,19 +73,42 @@ public class ThreadPoolManager {
         @Override
         public void run() {
 
-            while (!isFinish) {
+            System.out.println("Worker thread " + id + " starts");
+            Task task;
+            while (true) {
                 try {
-//                    System.out.println(TaskQueue.getInstance().getTaskCount());
-                    Task task = TaskQueue.getInstance().getTask();
-                    System.out.println("Thread " + id + " is executing task" + task.toString());
-                    task.doTask();
-                    System.out.println("Thread " + id + " is sleeping.......");
-                    sleep(20000);
+                    synchronized (taskQueue) {
+//                        System.out.println("polling task, task queue size:" + taskQueue.size());
+                        task = taskQueue.poll();
+                    }
+
+                    if (task != null) {
+                        System.out.println("Doing task:" + task.toString());
+                        task.doTask();
+                        continue;
+                    }
+
+                    synchronized (taskQueue) {
+                        if (taskQueue.isEmpty()) {
+//                            continue;
+                        }
+                    }
+
+                    if (crawler.isFinished()) {
+                        System.out.println("All task finished!");
+                        break;
+                    }
+
+                    sleep(5000);
+                    return;
                 } catch (InterruptedException e) {
 //                    e.printStackTrace();
-                    System.out.println("Shutdown Thread " + id + "!");
+
                 }
             }
+//            System.out.println(TaskQueue.getInstance().getTaskCount());
+//            System.out.println("Shutdown Thread " + id + "!");
+//            MonitorThread.updateFinishedWorkerThreadCount();
         }
     }
 }

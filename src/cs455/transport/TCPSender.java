@@ -10,11 +10,11 @@ import java.net.Socket;
 public class TCPSender {
     private DataOutputStream dataOutputStream;
 
-    public TCPSender(Socket socket) throws IOException {
+    protected TCPSender(Socket socket) throws IOException {
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
     }
 
-    public synchronized void sendData(byte[] data) throws IOException {
+    protected synchronized void sendData(byte[] data) throws IOException {
         int dataLength = data.length;
         dataOutputStream.writeInt(dataLength);
         dataOutputStream.write(data);

@@ -7,5 +7,5 @@ import cs455.wireformat.Event;
  */
 public interface Node {
 
-    public void onEvent(Event event, String srcAddr);
+    public void onEvent(Event event);
 }
