@@ -5,6 +5,7 @@ import cs455.harvester.Crawler;
 import net.htmlparser.jericho.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.util.*;
 
@@ -40,8 +41,7 @@ public class URLUtil {
             urlDomain = getDomain(url);
 //            System.out.println(url + "----->" + urlDomain);
         } catch (MalformedURLException e) {
-
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return ConfigUtil.getCrawlerMap().containsKey(urlDomain);
     }
@@ -139,10 +139,6 @@ public class URLUtil {
 //        file.mkdir();
     }
 
-    public int getThreadsCount() {
-        return threadsCount;
-    }
-
     public String resolveRedirects(String url) throws IOException {
 
         HttpURLConnection connection = (HttpURLConnection) (new URL(url).openConnection());
@@ -160,20 +156,46 @@ public class URLUtil {
         }
     }
 
-    public Set<String> extractUrl(String pageUrl, int depth) {
+    public Set<String> extractUrl(String lastUrl, String targetUrl, int depth) {//depth is the depth of lastUrl
 
-        synchronized (this) {
-            threadsCount++;
+//        synchronized (this) {
+//            threadsCount++;
+//        }
+        if (depth > Crawler.MAX_DEPTH) {
+            return null;
         }
 
+//        if (lastUrl != null && lastUrl.contains("~cs455")) {
+//            System.out.println();
+//        }
         Set<String> extractedUrls = new HashSet<String>();
 
         Config.LoggerProvider = LoggerProvider.DISABLED;
 
         try {
-            addProcessedUrl(pageUrl);
+            HttpURLConnection connection = (HttpURLConnection) (new URL(targetUrl).openConnection());
+            connection.connect();
+            //cannot omit
+            InputStream inputStream = connection.getInputStream();
 
-            Source source = new Source(new URL(pageUrl));
+            if (lastUrl != null) {
+                lastUrl = resolveRedirects(lastUrl);
+            }
+            targetUrl = resolveRedirects(targetUrl);
+
+
+            //add link to graph
+            if (lastUrl != null) {
+                Graph.getInstance().addLink(lastUrl, targetUrl, depth);
+
+            }
+
+            if (processedURLs.containsKey(targetUrl) && lastUrl != null) {
+                Graph.getInstance().addLink(lastUrl, targetUrl, depth);
+                return null;
+            }
+            Source source = new Source(inputStream);
+
 
             List<Element> aTags = source.getAllElements(HTMLElementName.A);
 
@@ -186,43 +208,48 @@ public class URLUtil {
                 }
 
                 if (!new URI(href).isAbsolute()) {
-                    href = new URI(pageUrl).resolve(href).toString();
+                    href = new URI(targetUrl).resolve(href).toString();
                 }
                 href = normalize(href);
                 href = "http://" + (new URL(href)).getAuthority() + (new URL(href)).getPath();
-                href = resolveRedirects(href);
+//                href = resolveRedirects(href);
                 if (isProcessed(href)) {
-                    Graph.getInstance().addLink(pageUrl, href, depth);
-                    System.out.println("Proceessed: " + href + "------------>" + Graph.getInstance().getVertex(href).getInLinks().size() + " inlinks");
+                    Graph.getInstance().addLink(targetUrl, href, depth);
+//                    System.out.println("Proceessed: " + href + "------------>" + Graph.getInstance().getVertex(href).getInLinks().size() + " inlinks");
 
                     continue;
                 } else if (!isTargetDomain(href) || !validPage(href)) {
                     continue;
                 }
 
-                addProcessedUrl(href);
+//                addProcessedUrl(href);
                 extractedUrls.add(href);
-                Graph.getInstance().addLink(pageUrl, href, depth);
-                System.out.println("Adding links.........");
-                System.out.println("From " + pageUrl + "------------>" + Graph.getInstance().getVertex(pageUrl).getOutLinks().size() + " outlinks");
-//                System.out.println("added: " + pageUrl + " ----->" + href);
+//                Graph.getInstance().addLink(targetUrl, href, depth);
+//                System.out.println("Adding links.........");
+//                System.out.println("From " + targetUrl + "------------>" + Graph.getInstance().getVertex(targetUrl).getOutLinks().size() + " outlinks");
+//                System.out.println("added: " + targetUrl + " ----->" + href);
 //                System.out.println("-----------Now there are " + getThreadsCount() + " threads in URLutil---------------");
             }
 
         } catch (MalformedURLException e) {
 //            e.printStackTrace();
-            addToBadUrls(pageUrl);
+            addToBadUrls(targetUrl);
         } catch (IOException e) {
-            addToBadUrls(pageUrl);
+            addToBadUrls(targetUrl);
 
         } catch (URISyntaxException e) {
 //            System.out.println(e.getMessage());
-//            addToBadUrls(pageUrl);
-            addToBadUrls(pageUrl);
+//            addToBadUrls(targetUrl);
+            addToBadUrls(targetUrl);
 
         }
 //        System.out.println(extractedUrls.size());
 //        System.out.println("LOOP OUT!");
+//        synchronized (this) {
+//            threadsCount--;
+//        }
+        addProcessedUrl(targetUrl);
+        badURLs.remove(targetUrl);
         return extractedUrls;
     }
 

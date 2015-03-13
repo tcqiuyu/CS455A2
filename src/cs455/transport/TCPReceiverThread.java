@@ -32,7 +32,9 @@ public class TCPReceiverThread extends Thread {
                     byte[] data = new byte[dataLength];
                     dataInputStream.readFully(data, 0, dataLength);
                     Event event = EventFactory.getInstance().getEvent(data);
-                    node.onEvent(event);
+                    if (event != null) {
+                        node.onEvent(event);
+                    }
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage());

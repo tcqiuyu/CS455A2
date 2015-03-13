@@ -36,13 +36,13 @@ public class CrawlingTask implements Task {
 
     @Override
     public void doTask() {
-        if (depth > Crawler.MAX_DEPTH) {
-            return;
-        }
+//        if (depth > Crawler.MAX_DEPTH) {
+//            return;
+//        }
 
         //URL in local domain
         if (URLUtil.withinDomain(destUrl)) {
-            Set<String> extractedUrls = URLUtil.getInstance().extractUrl(destUrl, depth);
+            Set<String> extractedUrls = URLUtil.getInstance().extractUrl(srcUrl, destUrl, depth);
             depth++;
             if (extractedUrls != null) {
                 for (String extractedUrl : extractedUrls) {
@@ -52,16 +52,20 @@ public class CrawlingTask implements Task {
 //                    }
                     CrawlingTask newTask = new CrawlingTask(destUrl, extractedUrl, depth, configUtil, false, crawler);
                     threadPoolManager.addTask(newTask);
-                    System.out.println(destUrl + " ------> " + extractedUrl);
+//                    System.out.println(destUrl + " ------> " + extractedUrl);
                 }
+            } else {
+                return;
             }
         } else if (URLUtil.isTargetDomain(destUrl)) {//URL in other target domain
             try {
                 NodeHandoffTask handoffTask = new NodeHandoffTask(srcUrl, destUrl);
-                TransportUtil.sendMessage(destUrl, handoffTask);
+                System.out.println("Sending relayed message to:" + destUrl);
+                TransportUtil.sendMessage(URLUtil.getDomain(destUrl), handoffTask);
                 crawler.incrementRelayMessageCount();
             } catch (IOException e) {
                 System.out.println(e.getMessage());
+//                System.out.println(e.getMessage());
             }
 
         }
@@ -69,8 +73,9 @@ public class CrawlingTask implements Task {
         if (isRelayed) {
             NodeReportHandoffTaskFinished taskFinished = new NodeReportHandoffTaskFinished();
             try {
-                TransportUtil.sendMessage(srcUrl, taskFinished);
+                TransportUtil.sendMessage(URLUtil.getDomain(srcUrl), taskFinished);
             } catch (IOException e) {
+                System.out.println(e.getMessage());
 //                e.printStackTrace();
             }
         }

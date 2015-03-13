@@ -19,6 +19,7 @@ public class EventHandler {
     }
 
     public void handleHandoffTask(Event event) {
+        System.out.println("-----------------------------Received hand off task-----------------------");
         NodeHandoffTask handoffTask = (NodeHandoffTask) event;
         String srcUrl = handoffTask.getSrcURL();
         String destUrl = handoffTask.getDestURL();
@@ -27,11 +28,9 @@ public class EventHandler {
 
     }
 
-    public void handleReportHandoffTask(Event event) {
-        crawler.decrementRelayMessageCount();
-    }
-
     public void handleStatusReport(Event event) {
+        System.out.println("-----------------------------Received status report-----------------------");
+
         NodeReportStatus statusReport = (NodeReportStatus) event;
         switch (statusReport.getStatus()) {
             case NodeReportStatus.CRAWLER_REPORT_FINISHED:

@@ -32,21 +32,28 @@ public class ConnectionFactory {
     }
 
 
-
     public synchronized TCPConnection getConnection(String url) throws MalformedURLException {
-        String key = ConfigUtil.getCrawlerMap().get(URLUtil.getDomain(url));
+        String key = ConfigUtil.getCrawlerMap().get(url);
         return connectionMap.get(key);
     }
 
-    public synchronized TCPConnection getConnection(String hostname, int port, InetAddress srcAddr, Node node) throws IOException {
+    public synchronized TCPConnection getConnection(String hostname, int port, InetAddress srcAddr, Node node) {
         String key = genKey(hostname, port);
-        TCPConnection connection;
+        TCPConnection connection = null;
         if (connectionMap.containsKey(key)) {
             connection = connectionMap.get(key);
         } else {
-            Socket socket = new Socket(hostname, port, srcAddr, 0);
-            connection = new TCPConnection(node, socket);
-            register(connection, hostname, port);
+            Socket socket = null;
+            try {
+                System.out.println("Establishing connection to: " + hostname + ":" + port);
+                socket = new Socket(hostname, port);
+                connection = new TCPConnection(node, socket);
+                register(connection, hostname, port);
+                System.out.println("Establishing connection successful: " + hostname + ":" + port);
+            } catch (IOException e) {
+                System.out.println("Error establishing connection to:" + hostname + ":" + port);
+                System.out.println(e.getMessage());
+            }
         }
         return connection;
     }

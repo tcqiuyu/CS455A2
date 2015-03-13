@@ -35,7 +35,7 @@ public class Vertex {
         }
     }
 
-    protected synchronized boolean addOutLink(String outUrl) {
+    protected boolean addOutLink(String outUrl) {
         synchronized (outLinks) {
             return outLinks.add(outUrl);
         }

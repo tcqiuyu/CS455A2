@@ -40,6 +40,7 @@ public class TCPServerThread extends Thread {
     public void run() {
         while (true) {
             try {
+                System.out.println("Server is waiting at port: " + localPort);
                 Socket socket = serverSocket.accept();
                 TCPConnection connection = new TCPConnection(node, socket);
             } catch (IOException e) {

@@ -1,6 +1,7 @@
 package cs455.graph;
 
 import cs455.harvester.Crawler;
+import cs455.util.URLUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,9 +23,14 @@ public class Graph {
         return instance;
     }
 
-    public Vertex addVertex(Vertex vertex) {
+    public boolean addVertex(Vertex vertex) {
         synchronized (graph) {
-            return graph.put(vertex.toString(), vertex);
+            if (graph.containsKey(vertex.toString())) {
+                return false;
+            } else {
+                graph.put(vertex.toString(), vertex);
+                return true;
+            }
         }
     }
 
@@ -39,11 +45,12 @@ public class Graph {
     }
 
     public synchronized void addLink(String srcUrl, String destUrl, int depth) {
+
         try {
             getVertex(destUrl).addInLink(srcUrl);
         } catch (NullPointerException e) {
             Vertex newVert = new Vertex(destUrl, depth + 1);
-            System.out.println("Dest Node " + destUrl + " does not exist: creating one...   Depth is " + (depth + 1));
+//            System.out.println("Dest Node " + destUrl + " does not exist: creating one...   Depth is " + (depth + 1));
             addVertex(newVert);
             newVert.addInLink(srcUrl);
         }
@@ -52,7 +59,7 @@ public class Graph {
             getVertex(srcUrl).addOutLink(destUrl);
         } catch (NullPointerException e) {
             Vertex newVert = new Vertex(srcUrl, depth);
-            System.out.println("Source Node " + srcUrl + " does not exist: creating one...   Depth is " + depth);
+//            System.out.println("Source Node " + srcUrl + " does not exist: creating one...   Depth is " + depth);
             addVertex(newVert);
             newVert.addOutLink(destUrl);
         }
@@ -62,43 +69,33 @@ public class Graph {
         return graph.keySet();
     }
 
-
-
-    public synchronized Set<Set<String>> getDisjointSubGraphSet() {
-        Set<Set<String>> output = new HashSet<Set<String>>();
-        vertices.remove(Crawler.getRootUrl());
-
-        while (vertices.size() != 0) {
-            for (String vertexStr : vertices) {
-                Set<String> singleOutput = new HashSet<String>();
-                getDisjointSubGraph(vertexStr, singleOutput);
-//                System.out.println("Subgraph size---------------->" + singleOutput.size());
-                output.add(singleOutput);
-            }
-
-        }
-        System.out.println("OUTPUT SIZE-------------->" + output.size());
-        return output;
-    }
-
-    private synchronized Set<String> getDisjointSubGraph(String vertexStr, Set<String> output) {
-
-
-        Vertex vertex = graph.get(vertexStr);
-        if (vertex != null) {
-            output.add(vertexStr);
-            vertices.remove(vertexStr);
-            HashSet<String> outLinks = vertex.getOutLinks();
-            if (outLinks.isEmpty() || vertex.getDepth() == Crawler.MAX_DEPTH) {
-                return output;
-            } else {
-                vertices.removeAll(outLinks);
-//                output.addAll(outLinks);
-                for (String outVertices : outLinks) {
-                    output.addAll(getDisjointSubGraph(outVertices, output));
-                }
-            }
-        }
-        return output;
-    }
+//    public synchronized Set<String> getDisjointSubGraph(Set<String> vertexSet, String vertexStr, Set<String> output) {
+//        Vertex vertex = graph.get(vertexStr);
+//        if (vertex != null) {
+//            output.add(vertexStr);
+//            vertexSet.remove(vertexStr);
+//
+//            HashSet<String> inLinks = vertex.getInLinks();
+//            if (!inLinks.isEmpty()) {
+//                for (String inVertex : inLinks) {
+//                    if (!inVertex.equals(Crawler.getRootUrl())) {
+//                        output.addAll(getDisjointSubGraph(vertexSet, inVertex, output));
+//                    }
+//                }
+//            }
+//            HashSet<String> outLinks = vertex.getOutLinks();
+//            if (outLinks.isEmpty()) {
+//                return output;
+//            } else {
+//
+//                for (String outVertex : outLinks) {
+//                    if (!outVertex.equals(Crawler.getRootUrl())) {
+//                        output.addAll(getDisjointSubGraph(vertexSet, outVertex, output));
+//                    }
+//                }
+//            }
+//
+//        }
+//        return output;
+//    }
 }

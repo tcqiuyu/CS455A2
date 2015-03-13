@@ -24,9 +24,7 @@ public class FileProcessor {
             }
             bufferedWriter.close();
         } catch (IOException e) {
-
-            System.out.println(e.getCause());
-
+            System.out.println(e.getMessage());
         }
 
     }

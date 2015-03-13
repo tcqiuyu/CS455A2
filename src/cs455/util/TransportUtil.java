@@ -27,6 +27,8 @@ public class TransportUtil {
 //        TCPConnection connection = ConnectionFactory.getInstance().
         if (conn != null) {
             conn.sendData(event.getBytes());
+        } else {
+            System.out.println("No Connection found for ------------->" + url);
         }
     }
 
