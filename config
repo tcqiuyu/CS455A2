@@ -1,2 +1,2 @@
-localhost:8000,http://www.cs.colostate.edu/cstop/index.html
-localhost:8001,http://www.math.colostate.edu/
+10.0.0.40:8000,http://www.cs.colostate.edu/cstop/index.html
+10.0.0.40:8001,http://www.math.colostate.edu/

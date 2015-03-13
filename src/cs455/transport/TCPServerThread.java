@@ -47,6 +47,7 @@ public class TCPServerThread extends Thread {
 
             }
         } catch (IOException e) {
+            System.out.println("-------------------------server error!!!!---------------------");
             System.err.println(e.getMessage());
         }
     }

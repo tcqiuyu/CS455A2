@@ -69,7 +69,7 @@ public class Crawler implements Node {
         Crawler crawler = new Crawler(port, poolSize, confPath);
 
         crawler.init();
-
+        crawler.writeToFile();
     }
 
     public synchronized void incrementProcessingTaskCount() {
@@ -145,6 +145,7 @@ public class Crawler implements Node {
         Vertex root = new Vertex(rootURL, 0);
         Graph.getInstance().addVertex(root);
         threadPoolManager.init();
+
     }
 
     private void initConnection() throws IOException {

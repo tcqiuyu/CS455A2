@@ -88,7 +88,7 @@ public class ThreadPoolManager {
                         continue;
                     }
                     crawler.decrementProcessingTaskCount();
-                    System.out.println("--------------------------" + crawler.getProcessingTaskCount() + " tasks------------------------------");
+//                    System.out.println("--------------------------" + crawler.getProcessingTaskCount() + " tasks------------------------------");
                     synchronized (taskQueue) {
                         if (taskQueue.isEmpty() && !crawler.hasProcessingTasks()) {
                             System.out.println("Task queue is empty, waiting for other crawlers...");
@@ -99,7 +99,6 @@ public class ThreadPoolManager {
                             } catch (IOException e) {
                                 System.out.println("IO Expection in sending report status");
                                 System.out.println(e.getMessage());
-                                System.out.println(e.getCause());
 //                            try {
 //                                crawler.writeToFile();
 //                            } catch (MalformedURLException e1) {
