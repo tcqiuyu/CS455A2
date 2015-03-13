@@ -64,6 +64,7 @@ public class CrawlingTask implements Task {
                 TransportUtil.sendMessage(URLUtil.getDomain(destUrl), handoffTask);
                 crawler.incrementRelayMessageCount();
             } catch (IOException e) {
+                System.out.println("Error when sending relayed message......");
                 System.out.println(e.getMessage());
 //                System.out.println(e.getMessage());
             }

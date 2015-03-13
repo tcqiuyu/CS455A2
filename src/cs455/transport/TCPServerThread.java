@@ -38,14 +38,16 @@ public class TCPServerThread extends Thread {
 
     @Override
     public void run() {
-        while (true) {
-            try {
+        Socket socket;
+        try {
+            while ((socket = serverSocket.accept()) != null) {
+
                 System.out.println("Server is waiting at port: " + localPort);
-                Socket socket = serverSocket.accept();
                 TCPConnection connection = new TCPConnection(node, socket);
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
+
             }
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
         }
     }
 }

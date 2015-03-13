@@ -66,6 +66,12 @@ public class ThreadPoolManager {
         @Override
         public void run() {
 
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+//                e.printStackTrace();
+            }
+
             System.out.println("Worker thread " + id + " starts");
             Task task;
             while (true) {
@@ -91,7 +97,9 @@ public class ThreadPoolManager {
                                 TransportUtil.sendToAll(reportStatus);
                                 taskQueue.wait();
                             } catch (IOException e) {
+                                System.out.println("IO Expection in sending report status");
                                 System.out.println(e.getMessage());
+                                System.out.println(e.getCause());
 //                            try {
 //                                crawler.writeToFile();
 //                            } catch (MalformedURLException e1) {
@@ -129,7 +137,6 @@ public class ThreadPoolManager {
                         break;
                     }
 
-                    sleep(5000);
                     return;
                 } catch (InterruptedException e) {
 //                    e.printStackTrace();
