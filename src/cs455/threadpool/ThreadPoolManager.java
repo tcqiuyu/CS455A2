@@ -1,11 +1,15 @@
 package cs455.threadpool;
 
+import cs455.graph.Graph;
+import cs455.graph.Vertex;
 import cs455.harvester.Crawler;
+import cs455.util.TransportUtil;
+import cs455.wireformat.proto.NodeReportStatus;
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.*;
 
 /**
  * Created by Qiu on 3/7/15.
@@ -49,19 +53,7 @@ public class ThreadPoolManager {
             }
         }
     }
-//
-//    public void shutdown() {
-//
-//        System.out.println("Shutting Down...");
-//        while (!TaskQueue.getInstance().isEmpty() && URLUtil.getInstance().getThreadsCount() == 0) {
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-////                e.printStackTrace();
-//            }
-//        }
-//        isFinish = true;
-//    }
+
 
     private class WorkerThread extends Thread {
         private int id;
@@ -89,8 +81,27 @@ public class ThreadPoolManager {
                     }
 
                     synchronized (taskQueue) {
-                        if (taskQueue.isEmpty()) {
-//                            continue;
+                        if (!taskQueue.isEmpty()) {
+                            continue;
+                        }
+                        NodeReportStatus reportStatus = new NodeReportStatus(NodeReportStatus.CRAWLER_REPORT_FINISHED);
+                        try {
+                            TransportUtil.sendToAll(reportStatus);
+                        } catch (IOException e) {
+//                            e.printStackTrace();
+                            Iterator<String> iterator = Graph.getInstance().getGraph().keySet().iterator();
+                            for (Map.Entry<String, Vertex> entry : Graph.getInstance().getGraph().entrySet()) {
+                                Set<String> inLinks = entry.getValue().getInLinks();
+                                Set<String> outLinks = entry.getValue().getOutLinks();
+                                System.out.println(entry.getKey() + " --------> " + "inlinks: " + inLinks.size() + " outlinks: " + outLinks.size());
+                            }
+
+                            try {
+                                crawler.writeToFile();
+                            } catch (MalformedURLException e1) {
+//                                e1.printStackTrace();
+                            }
+//                            Graph.getInstance().getDisjointSubGraphSet();
                         }
                     }
 

@@ -7,6 +7,7 @@ import cs455.wireformat.Event;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Set;
 
 /**
  * Created by Qiu on 3/9/2015.
@@ -24,6 +25,15 @@ public class TransportUtil {
             throws IOException {
         TCPConnection conn = ConnectionFactory.getInstance().getConnection(url);
 //        TCPConnection connection = ConnectionFactory.getInstance().
-        conn.sendData(event.getBytes());
+        if (conn != null) {
+            conn.sendData(event.getBytes());
+        }
+    }
+
+    public static void sendToAll(Event event) throws IOException {
+        Set<String> crawlerSet = ConfigUtil.getCrawlerMap().keySet();
+        for (String crawler : crawlerSet) {
+            sendMessage(crawler, event);
+        }
     }
 }

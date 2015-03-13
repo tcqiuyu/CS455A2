@@ -128,6 +128,17 @@ public class URLUtil {
         return normalized;
     }
 
+    public static Map<String, String> getBadURLs() {
+        return badURLs;
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        System.out.println(URLUtil.getDomain("http://www.cs.colostate.edu/cstop/index.html"));
+//        File file = new File("D:/test");
+//        file.mkdir();
+    }
+
     public int getThreadsCount() {
         return threadsCount;
     }
@@ -140,6 +151,7 @@ public class URLUtil {
         connection.getInputStream();
 
         return connection.getURL().toString();
+
     }
 
     public void addProcessedUrl(String url) {
@@ -148,7 +160,7 @@ public class URLUtil {
         }
     }
 
-    public Set<String> extractUrl(String pageUrl) {
+    public Set<String> extractUrl(String pageUrl, int depth) {
 
         synchronized (this) {
             threadsCount++;
@@ -178,29 +190,36 @@ public class URLUtil {
                 }
                 href = normalize(href);
                 href = "http://" + (new URL(href)).getAuthority() + (new URL(href)).getPath();
+                href = resolveRedirects(href);
                 if (isProcessed(href)) {
-                    Graph.getInstance().addLink(pageUrl, href);
+                    Graph.getInstance().addLink(pageUrl, href, depth);
+                    System.out.println("Proceessed: " + href + "------------>" + Graph.getInstance().getVertex(href).getInLinks().size() + " inlinks");
+
                     continue;
                 } else if (!isTargetDomain(href) || !validPage(href)) {
                     continue;
                 }
 
                 addProcessedUrl(href);
-                href = resolveRedirects(href);
                 extractedUrls.add(href);
-                Graph.getInstance().addLink(pageUrl, href);
-                System.out.println("added: " + pageUrl + " ----->" + href);
+                Graph.getInstance().addLink(pageUrl, href, depth);
+                System.out.println("Adding links.........");
+                System.out.println("From " + pageUrl + "------------>" + Graph.getInstance().getVertex(pageUrl).getOutLinks().size() + " outlinks");
+//                System.out.println("added: " + pageUrl + " ----->" + href);
 //                System.out.println("-----------Now there are " + getThreadsCount() + " threads in URLutil---------------");
             }
 
         } catch (MalformedURLException e) {
 //            e.printStackTrace();
-        } catch (IOException e) {
-//            System.out.println(e.getMessage());
             addToBadUrls(pageUrl);
+        } catch (IOException e) {
+            addToBadUrls(pageUrl);
+
         } catch (URISyntaxException e) {
 //            System.out.println(e.getMessage());
-            addProcessedUrl(pageUrl);
+//            addToBadUrls(pageUrl);
+            addToBadUrls(pageUrl);
+
         }
 //        System.out.println(extractedUrls.size());
 //        System.out.println("LOOP OUT!");
@@ -229,9 +248,9 @@ public class URLUtil {
 
     private void addToBadUrls(String url) {
         synchronized (badURLs) {
-            badURLs.put(url, null);
+            if (!processedURLs.containsKey(url)) {
+                badURLs.put(url, null);
+            }
         }
     }
-
-
 }

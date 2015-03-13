@@ -8,21 +8,25 @@ import cs455.transport.ConnectionFactory;
 import cs455.transport.TCPServerThread;
 import cs455.util.ConfigUtil;
 import cs455.util.EventHandler;
+import cs455.util.FileProcessor;
 import cs455.util.URLUtil;
 import cs455.wireformat.Event;
 import cs455.wireformat.Protocol;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Created by Qiu on 3/7/15.
  */
 public class Crawler implements Node {
 
-    public static final int MAX_DEPTH = 2;
+    public static final int MAX_DEPTH = 5;
     private static String rootURL;
 
     private int port;
@@ -78,12 +82,16 @@ public class Crawler implements Node {
         finishedCrawlersCount--;
     }
 
-    public int getRelayMessageCount() {
+    public synchronized int getFinishedCrawlersCount() {
+        return finishedCrawlersCount;
+    }
+
+    public synchronized int getRelayMessageCount() {
         return relayMessageCount;
     }
 
     public boolean isFinished() {
-        return getRelayMessageCount() == 0 && finishedCrawlersCount == ConfigUtil.getCrawlerCount();
+        return getRelayMessageCount() == 0 && getFinishedCrawlersCount() == ConfigUtil.getCrawlerCount();
     }
 
     public void init() {
@@ -109,7 +117,7 @@ public class Crawler implements Node {
 
         URLUtil.getInstance().addProcessedUrl(rootURL);
 
-        Vertex root = new Vertex(rootURL);
+        Vertex root = new Vertex(rootURL, 1);
         Graph.getInstance().addVertex(root);
         threadPoolManager.init();
     }
@@ -123,10 +131,43 @@ public class Crawler implements Node {
         }
     }
 
-
     public InetAddress getHostAddress() throws UnknownHostException {
         return InetAddress.getLocalHost();
     }
+
+    public void writeToFile() throws MalformedURLException {
+        FileProcessor.createDir();
+        String nodeDir = null;
+        File dir1 = new File(FileProcessor.usrPath + "/" + URLUtil.getDomain(rootURL));
+        dir1.mkdir();
+        nodeDir = FileProcessor.usrPath + "/" + URLUtil.getDomain(rootURL) + "/nodes";
+        File dir2 = new File(nodeDir);
+        System.out.println("Creating dir: " + nodeDir + "--->" + dir2.mkdir());
+
+        Set<String> VertexSet = Graph.getInstance().getVertices();
+        for (String vertexStr : VertexSet) {
+            Vertex vertex = Graph.getInstance().getVertex(vertexStr);
+            if (!vertexStr.equalsIgnoreCase(rootURL) && vertex != null) {
+                vertexStr = vertexStr.replaceAll("www.cs.colostate.edu/", "");
+                vertexStr = FileProcessor.getValidPathname(vertexStr);
+                String vertexDir = nodeDir + "/" + vertexStr;
+                String inPath = vertexDir + "/in";
+                String outPath = vertexDir + "/out";
+
+                FileProcessor.output(inPath, vertex.getInLinks());
+                FileProcessor.output(outPath, vertex.getOutLinks());
+            }
+        }
+
+        String brokenLinkPath = dir1.getPath() + "/borken-links";
+        FileProcessor.output(brokenLinkPath, URLUtil.getBadURLs().keySet());
+
+        String disjointPath = dir1.getPath() + "/disjoint-subgraphs";
+        new File(disjointPath).mkdir();
+
+
+    }
+
 
     @Override
     public void onEvent(Event event) {

@@ -7,13 +7,18 @@ import java.util.HashSet;
  */
 public class Vertex {
 
-    private String url;
-
     private final HashSet<String> inLinks = new HashSet<String>();
     private final HashSet<String> outLinks = new HashSet<String>();
+    private String url;
+    private int depth;
 
-    public Vertex(String url) {
+    public Vertex(String url, int depth) {
         this.url = url;
+        this.depth = depth;
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public HashSet<String> getInLinks() {

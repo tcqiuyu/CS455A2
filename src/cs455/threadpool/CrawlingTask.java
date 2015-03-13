@@ -42,8 +42,8 @@ public class CrawlingTask implements Task {
 
         //URL in local domain
         if (URLUtil.withinDomain(destUrl)) {
+            Set<String> extractedUrls = URLUtil.getInstance().extractUrl(destUrl, depth);
             depth++;
-            Set<String> extractedUrls = URLUtil.getInstance().extractUrl(destUrl);
             if (extractedUrls != null) {
                 for (String extractedUrl : extractedUrls) {
 //                    if (!Graph.getInstance().getGraph().containsKey(destUrl)) {
